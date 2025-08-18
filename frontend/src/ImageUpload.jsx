@@ -1,55 +1,76 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import ImageDisplay from './ImageDisplay';
+import './App.css';
 
 function ImageUpload() {
-    const [image, setImage] = useState(null);
-    const [detections, setDetections] = useState([]);
+    const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [detections, setDetections] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-        setPreview(URL.createObjectURL(file));
+    const handleFile = (e) => {
+        const f = e.target.files[0];
+        setFile(f);
+        setPreview(URL.createObjectURL(f));
+        setDetections([]);
     };
 
-    const handleUpload = async () => {
-        if (!image) return;
-
-        setIsLoading(true);
-        const formData = new FormData();
-        formData.append('image', image);
-
+    const uploadImage = async () => {
+        if (!file) return;
+        setLoading(true);
+        const form = new FormData();
+        form.append('image', file);
         try {
-            const res = await axios.post('http://localhost:5000/upload', formData, {
+            const res = await axios.post('http://localhost:5000/upload', form, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setDetections(res.data);
-        } catch (err) {
-            console.error('Upload failed:', err);
-            alert('Upload failed: ' + err.message);
+        } catch (e) {
+            alert('图片上传失败');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
+        }
+    };
+
+    const uploadVideo = async () => {
+        if (!file) return;
+        setLoading(true);
+        const form = new FormData();
+        form.append('video', file);
+        try {
+            const res = await axios.post('http://localhost:5000/upload_video', form, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setDetections(res.data);
+        } catch (e) {
+            alert('视频上传失败');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div>
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-            <button onClick={handleUpload} disabled={isLoading}>
-                {isLoading ? 'Loading...' : '上传并检测'}
-            </button>
+        <div className="upload-container">
+            <input type="file" accept="image/*,video/*" onChange={handleFile} />
+            <div>
+                <button onClick={uploadImage} disabled={loading}>
+                    {loading ? '处理中...' : '上传图片'}
+                </button>
+                <button onClick={uploadVideo} disabled={loading}>
+                    {loading ? '处理中...' : '上传视频'}
+                </button>
+            </div>
 
-            {preview && (
-                <div>
-                    <img src={preview} alt="preview" style={{ width: 400 }} />
-                    <ImageDisplay image={preview} detections={detections} />
-                </div>
-            )}
+            {preview && <img src={preview} alt="preview" style={{ width: 400 }} />}
+            {loading && <div className="loading">Loading...</div>}
 
-            {isLoading && <p>Processing...</p>}
-            <pre>{JSON.stringify(detections, null, 2)}</pre>
+            <ul className="detections-list">
+                {detections.map((d, i) => (
+                    <li key={i}>
+                        {d.label} ({(d.confidence * 100).toFixed(1)}%)
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
