@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import ImageDisplay from './ImageDisplay';
 
 function ImageUpload() {
     const [image, setImage] = useState(null);
@@ -40,7 +41,13 @@ function ImageUpload() {
                 {isLoading ? 'Loading...' : '上传并检测'}
             </button>
 
-            {preview && <img src={preview} alt="preview" style={{ width: 400 }} />}
+            {preview && (
+                <div>
+                    <img src={preview} alt="preview" style={{ width: 400 }} />
+                    <ImageDisplay image={preview} detections={detections} />
+                </div>
+            )}
+
             {isLoading && <p>Processing...</p>}
             <pre>{JSON.stringify(detections, null, 2)}</pre>
         </div>
